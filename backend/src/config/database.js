@@ -42,7 +42,7 @@ export const initDatabase = async () => {
     -- CJ Credentials table
     CREATE TABLE IF NOT EXISTS cj_credentials (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
       access_token TEXT,
       token_expires_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT NOW()

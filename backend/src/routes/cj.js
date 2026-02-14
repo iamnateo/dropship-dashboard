@@ -35,13 +35,21 @@ router.post('/connect', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'API key is required' });
     }
 
-    // Save the API key (we'll use it directly for CJ API calls)
-    await query(
-      `INSERT INTO cj_credentials (user_id, access_token, token_expires_at) 
-       VALUES ($1, $2, NOW() + INTERVAL '30 days')
-       ON CONFLICT (user_id) DO UPDATE SET access_token = $2, token_expires_at = NOW() + INTERVAL '30 days'`,
-      [req.user.id, apiKey]
+    // First try to update existing record
+    const updateResult = await query(
+      `UPDATE cj_credentials SET access_token = $1, token_expires_at = NOW() + INTERVAL '30 days'
+       WHERE user_id = $2`,
+      [apiKey, req.user.id]
     );
+
+    // If no record was updated, insert new one
+    if (updateResult.rowCount === 0) {
+      await query(
+        `INSERT INTO cj_credentials (user_id, access_token, token_expires_at) 
+         VALUES ($1, $2, NOW() + INTERVAL '30 days')`,
+        [req.user.id, apiKey]
+      );
+    }
 
     res.json({ message: 'CJ account connected successfully' });
   } catch (error) {
