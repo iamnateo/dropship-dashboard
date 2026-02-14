@@ -3,55 +3,40 @@ import { query } from '../config/database.js';
 
 const CJ_API_BASE_URL = 'https://developers.cjdropshipping.com/api2.0/v1';
 
-// Get CJ access token - exchange API key for token if needed
+// Get CJ access token - use API key directly
 export const getCjAccessToken = async (userId) => {
   const result = await query(
-    'SELECT access_token, token_expires_at, api_key FROM cj_credentials WHERE user_id = $1',
+    'SELECT api_key FROM cj_credentials WHERE user_id = $1',
     [userId]
   );
 
-  if (result.rows.length === 0) {
+  if (result.rows.length === 0 || !result.rows[0].api_key) {
     return null;
   }
 
-  const cred = result.rows[0];
-  
-  // Check if we have a valid access token
-  if (cred.access_token && cred.token_expires_at && new Date(cred.token_expires_at) > new Date()) {
-    return cred.access_token;
-  }
-  
-  // Need to get new access token from API key
-  if (cred.api_key) {
-    try {
-      const tokenResult = await axios.post(
-        `${CJ_API_BASE_URL}/user/getAccessToken`,
-        {},
-        {
-          headers: {
-            'CJ-Access-Token': cred.api_key
-          }
-        }
-      );
-      
-      if (tokenResult.data.code === 200 && tokenResult.data.data?.accessToken) {
-        const newToken = tokenResult.data.data.accessToken;
-        const expiresIn = tokenResult.data.data.expiresIn || 86400; // default 24 hours
-        
-        await query(
-          `UPDATE cj_credentials SET access_token = $1, token_expires_at = NOW() + INTERVAL '1 second' * $2 WHERE user_id = $3`,
-          [newToken, expiresIn, userId]
-        );
-        
-        return newToken;
-      }
-    } catch (error) {
-      console.error('Failed to get CJ access token:', error.response?.data || error.message);
-      return null;
-    }
-  }
+  // The API key itself is used as the access token
+  return result.rows[0].api_key;
+};
 
-  return null;
+// Save CJ credentials
+export const saveCjCredentials = async (userId, apiKey) => {
+  // Check if user already has credentials
+  const existing = await query(
+    'SELECT id FROM cj_credentials WHERE user_id = $1',
+    [userId]
+  );
+
+  if (existing.rows.length > 0) {
+    await query(
+      `UPDATE cj_credentials SET api_key = $1 WHERE user_id = $2`,
+      [apiKey, userId]
+    );
+  } else {
+    await query(
+      `INSERT INTO cj_credentials (user_id, api_key) VALUES ($1, $2)`,
+      [userId, apiKey]
+    );
+  }
 };
 
 // Save CJ credentials

@@ -20,14 +20,13 @@ router.post('/connect', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'API key is required' });
     }
 
-    // Save the API key (we'll exchange it for token when needed)
+    // Save the API key
     await cjApi.saveCjCredentials(req.user.id, apiKey);
 
-    // Try to get access token to verify
-    const token = await cjApi.getCjAccessToken(req.user.id);
-    
-    if (!token) {
-      return res.status(400).json({ error: 'Invalid API key. Please check and try again.' });
+    // Test the API key by making a test request
+    const testToken = await cjApi.getCjAccessToken(req.user.id);
+    if (!testToken) {
+      return res.status(400).json({ error: 'Invalid API Key. Please check and try again.' });
     }
 
     res.json({ message: 'CJ account connected successfully' });
