@@ -112,6 +112,14 @@ const Settings = () => {
               </div>
             </div>
             
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => { setCjConnected(false); setApiKey(''); }}
+              style={{ marginBottom: '1rem' }}
+            >
+              🔄 Reconnect / Update API Key
+            </button>
+            
             {cjBalance && (
               <div style={{ padding: '1rem', background: 'var(--background)', borderRadius: '0.5rem' }}>
                 <h4 style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Account Balance</h4>
