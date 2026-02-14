@@ -7,23 +7,8 @@ const router = express.Router();
 
 // Get CJ access token for user
 const getUserCjToken = async (userId) => {
-  const result = await query(
-    'SELECT access_token, token_expires_at FROM cj_credentials WHERE user_id = $1',
-    [userId]
-  );
-  
-  if (result.rows.length === 0) {
-    return null;
-  }
-  
-  const cred = result.rows[0];
-  
-  // Check if token is still valid
-  if (cred.token_expires_at && new Date(cred.token_expires_at) > new Date()) {
-    return cred.access_token;
-  }
-  
-  return null;
+  const result = await cjApi.getCjAccessToken(userId);
+  return result;
 };
 
 // Connect CJ account with API key
@@ -35,20 +20,14 @@ router.post('/connect', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'API key is required' });
     }
 
-    // First try to update existing record
-    const updateResult = await query(
-      `UPDATE cj_credentials SET access_token = $1, token_expires_at = NOW() + INTERVAL '30 days'
-       WHERE user_id = $2`,
-      [apiKey, req.user.id]
-    );
+    // Save the API key (we'll exchange it for token when needed)
+    await cjApi.saveCjCredentials(req.user.id, apiKey);
 
-    // If no record was updated, insert new one
-    if (updateResult.rowCount === 0) {
-      await query(
-        `INSERT INTO cj_credentials (user_id, access_token, token_expires_at) 
-         VALUES ($1, $2, NOW() + INTERVAL '30 days')`,
-        [req.user.id, apiKey]
-      );
+    // Try to get access token to verify
+    const token = await cjApi.getCjAccessToken(req.user.id);
+    
+    if (!token) {
+      return res.status(400).json({ error: 'Invalid API key. Please check and try again.' });
     }
 
     res.json({ message: 'CJ account connected successfully' });
@@ -75,8 +54,8 @@ router.get('/status', authenticateToken, async (req, res) => {
         balance: balanceData?.data || null
       });
     } catch (cjError) {
-      // Token might be invalid
-      await query('DELETE FROM cj_credentials WHERE user_id = $1', [req.user.id]);
+      // Token might be invalid, try to refresh
+      await cjApi.saveCjCredentials(req.user.id, null);
       res.json({ connected: false });
     }
   } catch (error) {
@@ -94,7 +73,7 @@ router.get('/products', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'CJ account not connected. Please connect your CJ account first.' });
     }
 
-    const { page = 1, pageSize = 20, keyword, categoryId } = req.query;
+    const { page = 1, pageSize = 20, keyword } = req.query;
     
     let productsData;
     if (keyword) {

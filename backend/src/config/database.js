@@ -43,10 +43,19 @@ export const initDatabase = async () => {
     CREATE TABLE IF NOT EXISTS cj_credentials (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+      api_key TEXT,
       access_token TEXT,
       token_expires_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT NOW()
     );
+    
+    -- Add api_key column if it doesn't exist (for existing databases)
+    DO $$ 
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'cj_credentials' AND column_name = 'api_key') THEN
+        ALTER TABLE cj_credentials ADD COLUMN api_key TEXT;
+      END IF;
+    END $$;
 
     -- Products table
     CREATE TABLE IF NOT EXISTS products (
