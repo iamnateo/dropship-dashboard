@@ -23,6 +23,11 @@ export const query = async (text, params) => {
 };
 
 export const initDatabase = async () => {
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL is not set!');
+    return;
+  }
+  
   const createTables = `
     -- Users table
     CREATE TABLE IF NOT EXISTS users (

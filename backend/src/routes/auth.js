@@ -15,7 +15,10 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]);
+    const existingUser = await query('SELECT id FROM users WHERE email = $1', [email]).catch(err => {
+      console.error('Query error:', err);
+      throw err;
+    });
     if (existingUser.rows.length > 0) {
       return res.status(400).json({ error: 'Email already registered' });
     }
