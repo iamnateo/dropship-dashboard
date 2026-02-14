@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { trendsAPI } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 
+// Trending products page
 const Trends = () => {
   const [activeSource, setActiveSource] = useState('all');
   const [trends, setTrends] = useState({ google: [], shopee: [], lazada: [] });
