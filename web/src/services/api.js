@@ -29,10 +29,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle auth errors
+// Handle auth errors and network errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Network error (backend down)
+    if (!error.response) {
+      console.error('Backend not responding');
+      return Promise.reject(new Error('Server is waking up. Please try again in a moment...'));
+    }
+    
     if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
