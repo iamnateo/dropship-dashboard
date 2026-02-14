@@ -39,27 +39,6 @@ export const saveCjCredentials = async (userId, apiKey) => {
   }
 };
 
-// Save CJ credentials
-export const saveCjCredentials = async (userId, apiKey) => {
-  // Check if user already has credentials
-  const existing = await query(
-    'SELECT id FROM cj_credentials WHERE user_id = $1',
-    [userId]
-  );
-
-  if (existing.rows.length > 0) {
-    await query(
-      `UPDATE cj_credentials SET api_key = $1, access_token = NULL, token_expires_at = NULL WHERE user_id = $2`,
-      [apiKey, userId]
-    );
-  } else {
-    await query(
-      `INSERT INTO cj_credentials (user_id, api_key) VALUES ($1, $2)`,
-      [userId, apiKey]
-    );
-  }
-};
-
 // Get CJ products with pagination
 export const getCjProducts = async (accessToken, page = 1, pageSize = 20) => {
   try {
