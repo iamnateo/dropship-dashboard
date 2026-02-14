@@ -5,7 +5,7 @@ import toast, { Toaster } from 'react-hot-toast';
 const Trends = () => {
   const [activeSource, setActiveSource] = useState('all');
   const [trends, setTrends] = useState({ google: [], shopee: [], lazada: [] });
-  const [], tiktok: [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
