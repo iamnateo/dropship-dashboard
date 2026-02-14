@@ -49,11 +49,17 @@ export const initDatabase = async () => {
       created_at TIMESTAMP DEFAULT NOW()
     );
     
-    -- Add api_key column if it doesn't exist (for existing databases)
+    -- Add columns if they don't exist (for existing databases)
     DO $$ 
     BEGIN
       IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'cj_credentials' AND column_name = 'api_key') THEN
         ALTER TABLE cj_credentials ADD COLUMN api_key TEXT;
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'cj_credentials' AND column_name = 'access_token') THEN
+        ALTER TABLE cj_credentials ADD COLUMN access_token TEXT;
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'cj_credentials' AND column_name = 'token_expires_at') THEN
+        ALTER TABLE cj_credentials ADD COLUMN token_expires_at TIMESTAMP;
       END IF;
     END $$;
 
