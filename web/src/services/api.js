@@ -1,6 +1,17 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// Get API URL - ensure it ends with /api
+const getApiUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    return envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`;
+  }
+  return 'http://localhost:3000/api';
+};
+
+const API_URL = getApiUrl();
+
+console.log('API URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
